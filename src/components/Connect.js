@@ -2,12 +2,14 @@ import React, {useState} from 'react'
 import { Button, TextField, Typography } from '@mui/material'
 import { Box } from '@mui/system'
 import { sha224, sha256 } from 'js-sha256'
+import { encrypt, decrypt } from '../utils'
 
 const Connect = () => {
   const [connect, setConnect] = useState(false)
   const [step, setStep] = useState(0)
   const [password, setPassword] = useState("")
   const [privateKey, setPrivateKey] = useState("")
+  const [exportKey, setExportKey] = useState(false)
 
   const handleClickConnect = () => {
     let sbt_key = localStorage.getItem("sbt_key")
@@ -27,9 +29,11 @@ const Connect = () => {
     setPrivateKey(e.target.value)
   }
 
-  const handleSubmitInfo = (e) => {
+  const handleSubmitInfo = () => {
     const hashedPassword = sha256(password)
-    localStorage.setItem("sbt_key", hashedPassword)
+    localStorage.setItem("sbt_password", hashedPassword)
+    const hashedPrivateKey = encrypt(privateKey, password)
+    localStorage.setItem("sbt_privatekey", hashedPrivateKey)
     setStep(3)
   }
 
@@ -40,7 +44,11 @@ const Connect = () => {
       setStep(3)
     }
   }
-  console.log(localStorage.getItem('stb_key'))
+
+  const handleExportPrivateKey = () => {
+    setExportKey(true)
+  }
+
   return (
     <Box>
       {step == 0 ? <Button variant="contained" sx={{width: "60%", marginTop: "50px"}} onClick={handleClickConnect}>Connect</Button> : ""}
@@ -55,6 +63,10 @@ const Connect = () => {
       </Box> : ""}
       {step == 3 ? <Box>
         <Typography sx={{marginTop: "20px"}}  variant="body2"> Welcome!</Typography>
+        <Button sx={{display: "block", margin: "20px auto", width: "60%"}}variant="contained" onClick={handleExportPrivateKey}>Export Private Key</Button>
+      </Box> : ""}
+      {step == 3 && exportKey ? <Box>
+        <Typography variant="body2"> Private key: {decrypt(localStorage.getItem('sbt_privatekey'), password)}</Typography>
       </Box> : ""}
     </Box>
   )
