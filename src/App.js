@@ -35,6 +35,7 @@ function App() {
   const [firstToken, setFirstToken] = useState("WBNB")
   const [secondToken, setSecondToken] = useState("DAI")
   const [token0Address, setToken0Address] = useState("")
+  const [swap, setSwap] = useState(false)
 
 
   const {web3, cakeFactoryContract} = useMemo(() => {
@@ -62,13 +63,17 @@ function App() {
     })
   }, [firstToken, secondToken])
   
-  useEffect(() => {
+  const lpContract = useMemo(() => {
     console.log("Alooooo")
     const lpContract = new web3.eth.Contract(
       lpAbi,
       pairAddress
     )
-      
+    return lpContract
+  }, [pairAddress])
+  console.log(lpContract)
+
+  useEffect(() => {
     getTokenAddress(lpContract)
     .then((res) => {
       setToken0Address(res)
@@ -85,7 +90,7 @@ function App() {
           setReserveFirstToken(BigNumber(res[1]))
         }
       })
-  }, [pairAddress])
+  }, [lpContract, swap])
 
   const handleChangeFirstToken = (e) => {
     if(e.target.value !== secondToken) {
@@ -111,6 +116,7 @@ function App() {
     let tempToken = firstToken
     setFirstToken(secondToken)
     setSecondToken(tempToken)
+    setSwap(!swap)
   }
 
   console.log(firstToken + " " + secondToken)
@@ -164,8 +170,8 @@ function App() {
           src={'https://storage.googleapis.com/token-c515a.appspot.com/tokens/' + secondToken + '.png'}
           />
       </div>
-      <Connect/>
-      <MakeTransaction/>
+      {/* <Connect/>
+      <MakeTransaction/> */}
     </Box>
   );
 }
