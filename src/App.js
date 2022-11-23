@@ -1,5 +1,5 @@
 import './App.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Web3 from 'web3';
 import {FACTORY_ADDRESS, ROUTER_ADDRESS} from "./constants/constants.js"
 import {getPairInfo, getReserves, getTokenAddress} from "./utils/index.js"
@@ -11,6 +11,7 @@ import BigNumber from 'bignumber.js';
 import { Typography, Box } from '@mui/material';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import Connect from './components/Connect';
+import MakeTransaction from './components/MakeTransaction';
 
 const cakeFactoryAbi = require('./abi/pcs_factory.json')
 const lpAbi = require('./abi/lp_abi.json')
@@ -25,49 +26,66 @@ const tokenAddress = {
 }
 
 function App() {
-  const web3 = new Web3('https://data-seed-prebsc-1-s1.binance.org:8545');
-  const cakeFactoryContract = new web3.eth.Contract(
-    cakeFactoryAbi,
-    FACTORY_ADDRESS
-  )
+  // const [web3, setWeb3] = useState(new Web3('https://bsctestapi.terminet.io/rpc'));
+  
 
-  const [pairAddress, setPairAddress] = useState("")
+  const [pairAddress, setPairAddress] = useState("0xAE4C99935B1AA0e76900e86cD155BFA63aB77A2a")
   const [reserveFirstToken, setReserveFirstToken] = useState("")
   const [reserveSecondToken, setReserveSecondToken] = useState("")
   const [firstToken, setFirstToken] = useState("WBNB")
   const [secondToken, setSecondToken] = useState("DAI")
   const [token0Address, setToken0Address] = useState("")
 
-  getPairInfo(
-    cakeFactoryContract,
-    tokenAddress[firstToken],
-    tokenAddress[secondToken]
-  ).then((res) => {
-    console.log("PairInfo: " + res)
-    setPairAddress(res)
-  })
 
-  const lpContract = new web3.eth.Contract(
-    lpAbi,
-    pairAddress
-  )
+  const {web3, cakeFactoryContract} = useMemo(() => {
+    console.log(0)
+    const web3 = new Web3('https://data-seed-prebsc-1-s1.binance.org:8545');
+    const cakeFactoryContract = new web3.eth.Contract(
+      cakeFactoryAbi,
+      FACTORY_ADDRESS
+    )
+    return {web3, cakeFactoryContract}
+  }, [])
+  console.log(pairAddress)
 
-  getTokenAddress(lpContract)
+  useEffect(() => {
+    console.log(1)
+    getPairInfo(
+      cakeFactoryContract,
+      tokenAddress[firstToken],
+      tokenAddress[secondToken]
+    ).then((res) => {
+      console.log("PairInfo: " + res)
+      setPairAddress(res)
+    }).catch(err => {
+      console.log(err)
+    })
+  }, [firstToken, secondToken])
+  
+  useEffect(() => {
+    console.log("Alooooo")
+    const lpContract = new web3.eth.Contract(
+      lpAbi,
+      pairAddress
+    )
+      
+    getTokenAddress(lpContract)
     .then((res) => {
       setToken0Address(res)
     })
 
-  getReserves(lpContract)
-    .then((res) => {
-      if(token0Address.toLowerCase() === tokenAddress[firstToken].toLowerCase()){
-        setReserveFirstToken(BigNumber(res[0]))
-        setReserveSecondToken(BigNumber(res[1]))
-      }
-      else{
-        setReserveSecondToken(BigNumber(res[0]))
-        setReserveFirstToken(BigNumber(res[1]))
-      }
-    })
+    getReserves(lpContract)
+      .then((res) => {
+        if(token0Address.toLowerCase() === tokenAddress[firstToken].toLowerCase()){
+          setReserveFirstToken(BigNumber(res[0]))
+          setReserveSecondToken(BigNumber(res[1]))
+        }
+        else{
+          setReserveSecondToken(BigNumber(res[0]))
+          setReserveFirstToken(BigNumber(res[1]))
+        }
+      })
+  }, [pairAddress])
 
   const handleChangeFirstToken = (e) => {
     if(e.target.value !== secondToken) {
@@ -92,8 +110,10 @@ function App() {
   const swapToken = (e) => {
     let tempToken = firstToken
     setFirstToken(secondToken)
-    setSecondToken(firstToken)
+    setSecondToken(tempToken)
   }
+
+  console.log(firstToken + " " + secondToken)
 
   return (
     <Box sx={{paddingTop: "40px"}} className="App">
@@ -138,12 +158,14 @@ function App() {
         <img className="tokenIcon" alt="BNB" height="auto"
           src={'https://storage.googleapis.com/token-c515a.appspot.com/tokens/' + firstToken + '.png'}
           />
+        {/* {loading ? <SwapHorizIcon sx={{fontSize: 50, margin: "auto 0"}} onClick={swapToken}/> :  */}
         <Typography variant="body1" sx={{margin: "auto 0", fontWeight: 600, textAlign: "center" }}>{BigNumber(reserveSecondToken).dividedBy(reserveFirstToken).toFixed(4)}</Typography>
         <img className="tokenIcon" alt="USDT" height="auto"
           src={'https://storage.googleapis.com/token-c515a.appspot.com/tokens/' + secondToken + '.png'}
           />
       </div>
       <Connect/>
+      <MakeTransaction/>
     </Box>
   );
 }
