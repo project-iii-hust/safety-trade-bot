@@ -1,7 +1,7 @@
 import './App.css';
 import { useEffect, useState, useMemo } from 'react';
 import Web3 from 'web3';
-import {FACTORY_ADDRESS, ROUTER_ADDRESS} from "./constants/constants.js"
+import {FACTORY_ADDRESS, ROUTER_ADDRESS, tokenAddress, BASE18} from "./constants/constants.js"
 import {getPairInfo, getReserves, getTokenAddress} from "./utils/index.js"
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -15,19 +15,9 @@ import MakeTransaction from './components/MakeTransaction';
 
 const cakeFactoryAbi = require('./abi/pcs_factory.json')
 const lpAbi = require('./abi/lp_abi.json')
-
-const tokenAddress = {
-  "WBNB": "0xae13d989dac2f0debff460ac112a837c89baa7cd",
-  "USDT": "0x7ef95a0fee0dd31b22626fa2e10ee6a223f8a684",
-  "ETH": "0x8babbb98678facc7342735486c851abd7a0d17ca",
-  "BUSD": "0x78867BbEeF44f2326bF8DDd1941a4439382EF2A7",
-  "DAI": "0x8a9424745056Eb399FD19a0EC26A14316684e274",
-  "SAFEMOON": "0xDAcbdeCc2992a63390d108e8507B98c7E2B5584a"
-}
+const cakeRouterAbi = require('./abi/pcs_router.json')
 
 function App() {
-  // const [web3, setWeb3] = useState(new Web3('https://bsctestapi.terminet.io/rpc'));
-  
 
   const [pairAddress, setPairAddress] = useState("0xAE4C99935B1AA0e76900e86cD155BFA63aB77A2a")
   const [reserveFirstToken, setReserveFirstToken] = useState("")
@@ -36,18 +26,22 @@ function App() {
   const [secondToken, setSecondToken] = useState("DAI")
   const [token0Address, setToken0Address] = useState("")
   const [swap, setSwap] = useState(false)
+  const [loading, setLoading] = useState(false)
 
 
-  const {web3, cakeFactoryContract} = useMemo(() => {
+  const {web3, cakeFactoryContract, cakeRouterContract} = useMemo(() => {
     console.log(0)
     const web3 = new Web3('https://data-seed-prebsc-1-s1.binance.org:8545');
     const cakeFactoryContract = new web3.eth.Contract(
       cakeFactoryAbi,
       FACTORY_ADDRESS
     )
-    return {web3, cakeFactoryContract}
+    const cakeRouterContract = new web3.eth.Contract(
+      cakeRouterAbi,
+      ROUTER_ADDRESS
+    )
+    return {web3, cakeFactoryContract, cakeRouterContract}
   }, [])
-  console.log(pairAddress)
 
   useEffect(() => {
     console.log(1)
@@ -64,32 +58,67 @@ function App() {
   }, [firstToken, secondToken])
   
   const lpContract = useMemo(() => {
-    console.log("Alooooo")
     const lpContract = new web3.eth.Contract(
       lpAbi,
       pairAddress
     )
     return lpContract
   }, [pairAddress])
-  console.log(lpContract)
+
+  const changePrice = () => {
+    setLoading(true)
+
+    getTokenAddress(lpContract)
+    .then((resAddress) => {
+      let token0Address = resAddress
+      getReserves(lpContract)
+        .then((res) => {
+          if(token0Address.toLowerCase() === tokenAddress[firstToken].toLowerCase()){
+            console.log("Similar")
+            setReserveFirstToken(BigNumber(res[0]))
+            setReserveSecondToken(BigNumber(res[1]))
+          }
+          else{
+            console.log("Different")
+            setReserveSecondToken(BigNumber(res[0]))
+            setReserveFirstToken(BigNumber(res[1]))
+          }
+        })
+    })
+    setLoading(false)
+  }
 
   useEffect(() => {
-    getTokenAddress(lpContract)
-    .then((res) => {
-      setToken0Address(res)
-    })
+    const iid = window.setInterval(async () => {
+      changePrice();
+      console.log("Refresh!")
+    }, [60000]);
 
-    getReserves(lpContract)
-      .then((res) => {
-        if(token0Address.toLowerCase() === tokenAddress[firstToken].toLowerCase()){
-          setReserveFirstToken(BigNumber(res[0]))
-          setReserveSecondToken(BigNumber(res[1]))
-        }
-        else{
-          setReserveSecondToken(BigNumber(res[0]))
-          setReserveFirstToken(BigNumber(res[1]))
-        }
-      })
+    return () => window.clearInterval(iid);
+  }, []);
+
+  useEffect(() => {
+    console.log("Change price!")
+    setLoading(true)
+
+    getTokenAddress(lpContract)
+    .then((resAddress) => {
+      let token0Address = resAddress
+      getReserves(lpContract)
+        .then((res) => {
+          if(token0Address.toLowerCase() === tokenAddress[firstToken].toLowerCase()){
+            console.log("Similar")
+            setReserveFirstToken(BigNumber(res[0]))
+            setReserveSecondToken(BigNumber(res[1]))
+          }
+          else{
+            console.log("Different")
+            setReserveSecondToken(BigNumber(res[0]))
+            setReserveFirstToken(BigNumber(res[1]))
+          }
+        })
+    })
+    setLoading(false)
   }, [lpContract, swap])
 
   const handleChangeFirstToken = (e) => {
@@ -99,6 +128,7 @@ function App() {
     else {
       setSecondToken(firstToken)
       setFirstToken(e.target.value)
+      setSwap(!swap)
     }
   }
 
@@ -109,6 +139,7 @@ function App() {
     else {
       setFirstToken(secondToken)
       setSecondToken(e.target.value)
+      setSwap(!swap)
     }
   }
 
@@ -161,17 +192,23 @@ function App() {
       </FormControl>
       </Box>
       <div className='flex-box'>
-        <img className="tokenIcon" alt="BNB" height="auto"
+        <Box>
+          <img className="tokenIcon" alt="BNB" height="auto"
           src={'https://storage.googleapis.com/token-c515a.appspot.com/tokens/' + firstToken + '.png'}
           />
-        {/* {loading ? <SwapHorizIcon sx={{fontSize: 50, margin: "auto 0"}} onClick={swapToken}/> :  */}
-        <Typography variant="body1" sx={{margin: "auto 0", fontWeight: 600, textAlign: "center" }}>{BigNumber(reserveSecondToken).dividedBy(reserveFirstToken).toFixed(4)}</Typography>
-        <img className="tokenIcon" alt="USDT" height="auto"
+          <Typography variant="body2" sx={{marginTop: "10px"}}>{BigNumber(reserveFirstToken).dividedBy(BASE18).toFixed(4)}</Typography>
+        </Box>  
+        {loading ? <SwapHorizIcon sx={{fontSize: 50, margin: "auto 0"}} onClick={swapToken}/> : 
+        <Typography variant="body1" sx={{margin: "auto 0", fontWeight: 600, textAlign: "center" }}>{BigNumber(reserveSecondToken).dividedBy(reserveFirstToken).toFixed(4)}</Typography>}
+        <Box>
+          <img className="tokenIcon" alt="USDT" height="auto"
           src={'https://storage.googleapis.com/token-c515a.appspot.com/tokens/' + secondToken + '.png'}
           />
+          <Typography variant="body2" sx={{marginTop: "10px"}}>{BigNumber(reserveSecondToken).dividedBy(BASE18).toFixed(4)}</Typography>
+        </Box>
       </div>
-      {/* <Connect/>
-      <MakeTransaction/> */}
+      <Connect firstToken={firstToken} secondToken={secondToken} web3={web3} cakeRouterContract={cakeRouterContract} lpContract={lpContract}/>
+      {/* <MakeTransaction firstToken={firstToken} secondToken={secondToken} web3={web3}/> */}
     </Box>
   );
 }

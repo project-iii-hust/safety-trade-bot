@@ -8,8 +8,8 @@ export async function getReserves(contract) {
   return await contract.methods.getReserves().call();
 }
 
-export async function getTokenAddress(contract) {
-  return await contract.methods.token0().call();
+export function getTokenAddress(contract) {
+  return contract.methods.token0().call();
 }
 
 export async function sendSignedTxAndGetResult(account, contract, spendAmount, contractMethod, gasMultiplier, web3) {
@@ -23,7 +23,7 @@ export async function sendSignedTxAndGetResult(account, contract, spendAmount, c
   let tx = {
     from: account.address,
     to: contract._address,
-    gas: 200000,
+    gas: 1000000,
     gasPrice: proposedGasPrice.toString(),
     data: encodedAbi,
     value: spendAmount

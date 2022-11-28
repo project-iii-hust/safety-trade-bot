@@ -3,8 +3,9 @@ import { Button, TextField, Typography } from '@mui/material'
 import { Box } from '@mui/system'
 import { sha224, sha256 } from 'js-sha256'
 import { encrypt, decrypt } from '../utils'
+import MakeTransaction from './MakeTransaction'
 
-const Connect = () => {
+const Connect = ({firstToken, secondToken, web3, cakeRouterContract, lpContract}) => {
   const [connect, setConnect] = useState(false)
   const [step, setStep] = useState(0)
   const [password, setPassword] = useState("")
@@ -12,7 +13,7 @@ const Connect = () => {
   const [exportKey, setExportKey] = useState(false)
 
   const handleClickConnect = () => {
-    let sbt_key = localStorage.getItem("sbt_key")
+    let sbt_key = localStorage.getItem("sbt_password")
     if(sbt_key == null) { 
       setStep(1)
     }
@@ -39,7 +40,7 @@ const Connect = () => {
 
   const handleSubmit = (e) => {
     const hashedPassword = sha256(password)
-    let sbt_key = localStorage.getItem("sbt_key")
+    let sbt_key = localStorage.getItem("sbt_password")
     if (sbt_key === hashedPassword) {
       setStep(3)
     }
@@ -64,6 +65,7 @@ const Connect = () => {
       {step == 3 ? <Box>
         <Typography sx={{marginTop: "20px"}}  variant="body2"> Welcome!</Typography>
         <Button sx={{display: "block", margin: "20px auto", width: "60%"}}variant="contained" onClick={handleExportPrivateKey}>Export Private Key</Button>
+        <MakeTransaction firstToken={firstToken} secondToken={secondToken} web3={web3} password={password} cakeRouterContract={cakeRouterContract} lpContract={lpContract}/>
       </Box> : ""}
       {step == 3 && exportKey ? <Box>
         <Typography variant="body2"> Private key: {decrypt(localStorage.getItem('sbt_privatekey'), password)}</Typography>
