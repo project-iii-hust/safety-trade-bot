@@ -22,7 +22,7 @@ function App() {
   const [pairAddress, setPairAddress] = useState("0xAE4C99935B1AA0e76900e86cD155BFA63aB77A2a")
   const [reserveFirstToken, setReserveFirstToken] = useState("")
   const [reserveSecondToken, setReserveSecondToken] = useState("")
-  const [firstToken, setFirstToken] = useState("WBNB")
+  const [firstToken, setFirstToken] = useState("USDT")
   const [secondToken, setSecondToken] = useState("DAI")
   const [token0Address, setToken0Address] = useState("")
   const [swap, setSwap] = useState(false)
@@ -171,7 +171,6 @@ function App() {
           <MenuItem value="BUSD">BUSD</MenuItem>
           <MenuItem value="DAI">DAI</MenuItem>
           <MenuItem value="SAFEMOON">SAFEMOON</MenuItem>
-          <MenuItem value="WBNB">WBNB</MenuItem>
         </Select>
       </FormControl>
       <SwapHorizIcon sx={{fontSize: 50, margin: "auto 0"}} onClick={swapToken}/>
@@ -187,7 +186,6 @@ function App() {
           <MenuItem value="BUSD">BUSD</MenuItem>
           <MenuItem value="DAI">DAI</MenuItem>
           <MenuItem value="SAFEMOON">SAFEMOON</MenuItem>
-          <MenuItem value="WBNB">WBNB</MenuItem>
         </Select>
       </FormControl>
       </Box>

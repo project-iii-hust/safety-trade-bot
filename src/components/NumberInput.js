@@ -13,5 +13,5 @@ export default function NumberInput(props) {
     }
   };
 
-  return <TextField {...rest} type="text" onChange={handleInputChange} />;
+  return <TextField sx={{width: "80%", marginTop: "30px"}} {...rest} type="text" onChange={handleInputChange} />;
 }
