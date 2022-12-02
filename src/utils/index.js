@@ -1,3 +1,4 @@
+/*global chrome*/
 import BigNumber from "bignumber.js";
 import { tokenAddress } from "../constants/constants";
 
@@ -76,7 +77,7 @@ export async function addPair(spendToken, receiveToken, allowance, condition, we
     tokenAddress[spendToken]
   )
 
-  const approveFunction = tokenContract.methods.approve(cakeRouterContract._address, BigNumber(allowance).multipliedBy("1000000000000000000"))
+  const approveFunction = tokenContract.methods.approve(cakeRouterContract._address, BigNumber(allowance).multipliedBy("1000000000000000000").toFixed())
   await sendSignedTxAndGetResult(account, tokenContract, 0, approveFunction, 10.0, web3)
     .then(res => {
       console.log("Successful approve " + allowance + " " + spendToken + "!")
@@ -84,6 +85,7 @@ export async function addPair(spendToken, receiveToken, allowance, condition, we
 
   let sbt_pairs = JSON.parse(localStorage.getItem("sbt_pairs"))
   if(sbt_pairs == null) { 
+    chrome.storage.local.set({"sbt_pairs": JSON.stringify([[spendToken, receiveToken, allowance, condition]])}, () => {})
     localStorage.setItem("sbt_pairs", JSON.stringify([[spendToken, receiveToken, allowance, condition]]))
     console.log("Set local storage!")
   }
@@ -91,6 +93,7 @@ export async function addPair(spendToken, receiveToken, allowance, condition, we
     const findPair = sbt_pairs.find(pair => pair[0] === spendToken && pair[1] === receiveToken)
     if(findPair == null) {
       sbt_pairs.push([spendToken, receiveToken, allowance, condition])
+      chrome.storage.local.set({"sbt_pairs": JSON.stringify(sbt_pairs)}, () => {})
       localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
     }
     else {
@@ -104,6 +107,34 @@ export async function addPair(spendToken, receiveToken, allowance, condition, we
       })
       localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
     }
+  }
+}
+
+export function removePair(spendToken, receiveToken) {
+  try {
+    let sbt_pairs = JSON.parse(localStorage.getItem("sbt_pairs"))
+    sbt_pairs = sbt_pairs.filter((pair) => pair[0] !== spendToken || pair[1] !== receiveToken)
+    localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
+    console.log("Remove pair " + spendToken + " ~ " + receiveToken + " !")
+  } catch(ex) {
+    console.log(ex)
+  }
+}
+
+export function updatePair(spendToken, receiveToken, allowance, condition) {
+  try {
+    let sbt_pairs = JSON.parse(localStorage.getItem("sbt_pairs"))
+    sbt_pairs.map(pair => {
+      if(pair[0] === spendToken && pair[1] === receiveToken) {
+        pair[2] = allowance
+        pair[3] = condition
+      }
+      return pair
+    })
+    localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
+    console.log("Update pair " + spendToken + " ~ " + receiveToken + " !")
+  } catch(ex) {
+    console.log(ex)
   }
 }
 

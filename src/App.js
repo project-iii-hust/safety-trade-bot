@@ -1,7 +1,8 @@
+// All test variable refer to testnet 
 import './App.css';
 import { useEffect, useState, useMemo } from 'react';
 import Web3 from 'web3';
-import {FACTORY_ADDRESS, ROUTER_ADDRESS, tokenAddress, BASE18} from "./constants/constants.js"
+import {FACTORY_ADDRESS, ROUTER_ADDRESS, tokenAddress, FACTORY_ADDRESS_TEST, ROUTER_ADDRESS_TEST, tokenAddressTest, BASE18} from "./constants/constants.js"
 import {getPairInfo, getReserves, getTokenAddress} from "./utils/index.js"
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -19,28 +20,37 @@ const cakeRouterAbi = require('./abi/pcs_router.json')
 
 function App() {
 
-  const [pairAddress, setPairAddress] = useState("0xAE4C99935B1AA0e76900e86cD155BFA63aB77A2a")
+  const [pairAddress, setPairAddress] = useState("0xf6f5CE9a91Dd4FAe2d2eD92E25F2A4dc8564F174")
+  const [pairAddressTest, setPairAddressTest] = useState("0xaF9399F70d896dA0D56A4B2CbF95F4E90a6B99e8")
   const [reserveFirstToken, setReserveFirstToken] = useState("")
   const [reserveSecondToken, setReserveSecondToken] = useState("")
   const [firstToken, setFirstToken] = useState("USDT")
   const [secondToken, setSecondToken] = useState("DAI")
-  const [token0Address, setToken0Address] = useState("")
   const [swap, setSwap] = useState(false)
   const [loading, setLoading] = useState(false)
 
 
-  const {web3, cakeFactoryContract, cakeRouterContract} = useMemo(() => {
+  const {web3, web3Test, cakeFactoryContract, cakeRouterContract, cakeFactoryContractTest, cakeRouterContractTest} = useMemo(() => {
     console.log(0)
-    const web3 = new Web3('https://data-seed-prebsc-1-s1.binance.org:8545');
+    const web3Test = new Web3('https://data-seed-prebsc-1-s1.binance.org:8545');
+    const web3 = new Web3('https://bsc-dataseed1.binance.org/');
     const cakeFactoryContract = new web3.eth.Contract(
       cakeFactoryAbi,
       FACTORY_ADDRESS
+    )
+    const cakeFactoryContractTest = new web3Test.eth.Contract(
+      cakeFactoryAbi, 
+      FACTORY_ADDRESS_TEST
     )
     const cakeRouterContract = new web3.eth.Contract(
       cakeRouterAbi,
       ROUTER_ADDRESS
     )
-    return {web3, cakeFactoryContract, cakeRouterContract}
+    const cakeRouterContractTest = new web3.eth.Contract(
+      cakeFactoryAbi,
+      ROUTER_ADDRESS_TEST
+    )
+    return {web3, web3Test, cakeFactoryContract, cakeRouterContract, cakeFactoryContractTest, cakeRouterContractTest}
   }, [])
 
   useEffect(() => {
@@ -55,14 +65,30 @@ function App() {
     }).catch(err => {
       console.log(err)
     })
+
+    getPairInfo(
+      cakeFactoryContractTest,
+      tokenAddressTest[firstToken],
+      tokenAddressTest[secondToken]
+    ).then((res) => {
+      console.log("PairInfoTest: " + res)
+      setPairAddressTest(res)
+    }).catch(err => {
+      console.log(err)
+    })
+
   }, [firstToken, secondToken])
   
-  const lpContract = useMemo(() => {
+  const {lpContract, lpContractTest} = useMemo(() => {
     const lpContract = new web3.eth.Contract(
       lpAbi,
       pairAddress
     )
-    return lpContract
+    const lpContractTest = new web3.eth.Contract(
+      lpAbi,
+      pairAddressTest
+    )
+    return {lpContract, lpContractTest}
   }, [pairAddress])
 
   const changePrice = () => {
@@ -170,7 +196,7 @@ function App() {
           <MenuItem value="ETH">ETH</MenuItem>
           <MenuItem value="BUSD">BUSD</MenuItem>
           <MenuItem value="DAI">DAI</MenuItem>
-          <MenuItem value="SAFEMOON">SAFEMOON</MenuItem>
+          <MenuItem value="CAKE">CAKE</MenuItem>
         </Select>
       </FormControl>
       <SwapHorizIcon sx={{fontSize: 50, margin: "auto 0"}} onClick={swapToken}/>
@@ -185,13 +211,13 @@ function App() {
           <MenuItem value="ETH">ETH</MenuItem>
           <MenuItem value="BUSD">BUSD</MenuItem>
           <MenuItem value="DAI">DAI</MenuItem>
-          <MenuItem value="SAFEMOON">SAFEMOON</MenuItem>
+          <MenuItem value="CAKE">CAKE</MenuItem>
         </Select>
       </FormControl>
       </Box>
       <div className='flex-box'>
         <Box>
-          <img className="tokenIcon" alt="BNB" height="auto"
+          <img className="tokenIcon" alt={firstToken} height="auto"
           src={'https://storage.googleapis.com/token-c515a.appspot.com/tokens/' + firstToken + '.png'}
           />
           <Typography variant="body2" sx={{marginTop: "10px"}}>{BigNumber(reserveFirstToken).dividedBy(BASE18).toFixed(4)}</Typography>
@@ -199,13 +225,13 @@ function App() {
         {loading ? <SwapHorizIcon sx={{fontSize: 50, margin: "auto 0"}} onClick={swapToken}/> : 
         <Typography variant="body1" sx={{margin: "auto 0", fontWeight: 600, textAlign: "center" }}>{BigNumber(reserveSecondToken).dividedBy(reserveFirstToken).toFixed(4)}</Typography>}
         <Box>
-          <img className="tokenIcon" alt="USDT" height="auto"
+          <img className="tokenIcon" alt={secondToken} height="auto"
           src={'https://storage.googleapis.com/token-c515a.appspot.com/tokens/' + secondToken + '.png'}
           />
           <Typography variant="body2" sx={{marginTop: "10px"}}>{BigNumber(reserveSecondToken).dividedBy(BASE18).toFixed(4)}</Typography>
         </Box>
       </div>
-      <Connect firstToken={firstToken} secondToken={secondToken} web3={web3} cakeRouterContract={cakeRouterContract} lpContract={lpContract}/>
+      <Connect firstToken={firstToken} secondToken={secondToken} web3={web3Test} cakeRouterContract={cakeRouterContractTest} lpContract={lpContractTest}/>
       {/* <MakeTransaction firstToken={firstToken} secondToken={secondToken} web3={web3}/> */}
     </Box>
   );

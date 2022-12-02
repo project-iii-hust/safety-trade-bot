@@ -2,13 +2,13 @@
   "manifest_version": 3,
   "name": "Safety Trading Bot",
   "description": "Safety Trading Bot",
-  "version": "2.12",
+  "version": "2.53",
   "action": {
     "default_popup": "index.html",
     "default_title": "Trading Bot"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "js/background.js"
   },
   "permissions": [ "tabs", "alarms", "notifications", "storage" ]
 }

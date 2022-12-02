@@ -1,17 +1,19 @@
 import React, {useState, useMemo, useEffect} from 'react';
 import { privateKeyToAccount, sendSignedTxAndGetResult, addPair } from '../utils';
 import {tokenAddress} from "../constants/constants.js"
-import { Button, Box} from '@mui/material';
+import { Button, Box, Typography} from '@mui/material';
 import {decrypt} from '../utils'
 import NumberInput from './NumberInput';
 import BigNumber from 'bignumber.js';
-import CustomAlert from './CustomAlert';
+import PairComponent from './PairComponent';
 
 const bep20TokenAbi = require('../abi/bep20_token.json')
 
 const MakeTransaction = ({firstToken, secondToken, web3, password, cakeRouterContract, lpContract}) => {
   const [tokenAmount, setTokenAmount] = useState("0")
   const [condition, setCondition] = useState("0")
+  const [update, setUpdate] = useState(false)
+  const [account, setAccount] = useState(null)
 
   const tokenContract = useMemo(() => {
     const tokenContract = new web3.eth.Contract(
@@ -21,7 +23,10 @@ const MakeTransaction = ({firstToken, secondToken, web3, password, cakeRouterCon
     return tokenContract
   }, [firstToken])
 
-  const [account, setAccount] = useState(null)
+  const pairList = useMemo(() => {
+    const pairList = JSON.parse(localStorage.getItem("sbt_pairs"))
+    return pairList
+  }, [update])
 
   useEffect(() => {
     const pk = decrypt(localStorage.getItem('sbt_privatekey'), password)
@@ -31,6 +36,15 @@ const MakeTransaction = ({firstToken, secondToken, web3, password, cakeRouterCon
         setAccount(res)
       })
   }, [])
+
+  useEffect(() => {
+    const iid = window.setInterval(async () => {
+      setUpdate(!update)
+      console.log("Refresh!")
+    }, [60000]);
+
+    return () => window.clearInterval(iid);
+  }, []);
 
   const handleClick = async () => {
     addPair(firstToken, secondToken, tokenAmount, condition, web3, bep20TokenAbi, cakeRouterContract, account)
@@ -63,27 +77,34 @@ const MakeTransaction = ({firstToken, secondToken, web3, password, cakeRouterCon
 
   return (
     <Box>
-      <NumberInput
-        size="small"
-        variant="outlined"
-        label="Enter amount"
-        type="number"
-        value={tokenAmount}
-        onChange={(e) => setTokenAmount(e.target.value)}
-        className={""}
-        fullWidth
-      />
-      <NumberInput
-        size="small"
-        variant="outlined"
-        label="Enter condition"
-        type="number"
-        value={condition}
-        onChange={(e) => setCondition(e.target.value)}
-        className={""}
-        fullWidth
-      />
+      <Box sx={{display: "flex", justifyContent: "space-around"}}>
+        <NumberInput
+          size="small"
+          variant="outlined"
+          label="Enter amount"
+          type="number"
+          value={tokenAmount}
+          onChange={(e) => setTokenAmount(e.target.value)}
+          className={""}
+          fullWidth
+        />
+        <NumberInput
+          size="small"
+          variant="outlined"
+          label="Enter condition"
+          type="number"
+          value={condition}
+          onChange={(e) => setCondition(e.target.value)}
+          className={""}
+          fullWidth
+        />
+      </Box>
       <Button sx={{marginTop: "20px"}} variant="contained" onClick={handleClick}>Add {firstToken} ~ {secondToken}</Button> 
+      {pairList ? <Box>
+        {pairList.map((pair) => (
+          <PairComponent data={pair}/>
+        ))}
+      </Box> : ""}
       {/* <Button onClick={handleShowAllowance}>Check</Button>  */}
       {/* <CustomAlert message="Hi" status="success"/> */}
       {/* <div>{account}</div> */}

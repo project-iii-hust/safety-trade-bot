@@ -6,7 +6,6 @@ import { encrypt, decrypt } from '../utils'
 import MakeTransaction from './MakeTransaction'
 
 const Connect = ({firstToken, secondToken, web3, cakeRouterContract, lpContract}) => {
-  const [connect, setConnect] = useState(false)
   const [step, setStep] = useState(0)
   const [password, setPassword] = useState("")
   const [privateKey, setPrivateKey] = useState("")
@@ -63,11 +62,7 @@ const Connect = ({firstToken, secondToken, web3, cakeRouterContract, lpContract}
         <Button sx={{display: "block", margin: "20px auto", width: "60%"}}variant="contained" onClick={handleSubmit}>Submit</Button>
       </Box> : ""}
       {step == 3 ? <Box>
-        {/* <Button sx={{display: "block", margin: "20px auto", width: "60%"}}variant="contained" onClick={handleExportPrivateKey}>Export Private Key</Button> */}
         <MakeTransaction firstToken={firstToken} secondToken={secondToken} web3={web3} password={password} cakeRouterContract={cakeRouterContract} lpContract={lpContract}/>
-      </Box> : ""}
-      {step == 3 && exportKey ? <Box>
-        <Typography variant="body2"> Private key: {decrypt(localStorage.getItem('sbt_privatekey'), password)}</Typography>
       </Box> : ""}
     </Box>
   )
