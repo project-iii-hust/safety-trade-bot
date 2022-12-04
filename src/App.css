@@ -1,7 +1,7 @@
 .App {
   text-align: center;
-  height: 550px;
-  width: 350px;
+  height: 860px;
+  width: 450px;
   background-color: antiquewhite;
 }
 
@@ -52,4 +52,8 @@
 .flex-box {
   display: flex;
   justify-content: space-around;
+}
+
+.header-logo{
+  width: 100px
 }

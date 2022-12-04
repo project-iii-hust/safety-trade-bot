@@ -5,7 +5,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { removePair, updatePair } from '../utils';
 import NumberInput from './NumberInput';
 
-const PairComponent = ({data}) => {
+const PairComponent = ({data, setReload, reload}) => {
 
   const [change, setChange] = useState(false)
   const [tokenAmount, setTokenAmount] = useState("0")
@@ -13,11 +13,13 @@ const PairComponent = ({data}) => {
 
   const handleDelete = () => {
     removePair(data[0], data[1])
+    setReload(!reload)
   }
 
   const handleClick = () => {
     updatePair(data[0], data[1], tokenAmount, condition)
     setChange(false)
+    setReload(!reload)
   }
 
   return (

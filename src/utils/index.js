@@ -2,7 +2,8 @@
 import BigNumber from "bignumber.js";
 import { tokenAddress } from "../constants/constants";
 
-const bep20TokenAbi = require('../abi/bep20_token.json')
+const lpAbi = require('../abi/lp_abi.json')
+
 
 export async function getPairInfo(contract, tokenA, tokenB) {
   return await contract.methods.getPair(tokenA, tokenB).call();
@@ -85,16 +86,16 @@ export async function addPair(spendToken, receiveToken, allowance, condition, we
 
   let sbt_pairs = JSON.parse(localStorage.getItem("sbt_pairs"))
   if(sbt_pairs == null) { 
-    chrome.storage.local.set({"sbt_pairs": JSON.stringify([[spendToken, receiveToken, allowance, condition]])}, () => {})
     localStorage.setItem("sbt_pairs", JSON.stringify([[spendToken, receiveToken, allowance, condition]]))
+    // chrome.storage.local.set({"sbt_pairs": JSON.stringify([[spendToken, receiveToken, allowance, condition]])}, () => {})
     console.log("Set local storage!")
   }
   else{
     const findPair = sbt_pairs.find(pair => pair[0] === spendToken && pair[1] === receiveToken)
     if(findPair == null) {
       sbt_pairs.push([spendToken, receiveToken, allowance, condition])
-      chrome.storage.local.set({"sbt_pairs": JSON.stringify(sbt_pairs)}, () => {})
       localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
+      // chrome.storage.local.set({"sbt_pairs": JSON.stringify(sbt_pairs)}, () => {})
     }
     else {
       let new_allowance = BigNumber(findPair[2]).isGreaterThan(allowance) ? findPair[2] : allowance
@@ -106,6 +107,7 @@ export async function addPair(spendToken, receiveToken, allowance, condition, we
         return pair
       })
       localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
+      // chrome.storage.local.set({"sbt_pairs": JSON.stringify(sbt_pairs)}, () => {})
     }
   }
 }
@@ -158,3 +160,29 @@ export function decrypt(text, key) {
   let charTextNew = charTextCode.map(c => String.fromCharCode(c))
   return charTextNew.join("")
 }
+
+export const getPrice = async (web3, pairAddress) => {
+  try {
+    const lpContract = await new web3.eth.Contract(
+      lpAbi,
+      pairAddress
+    )
+
+    const resAddress = await getTokenAddress(lpContract)
+
+    console.log("Res Address: " +   resAddress)
+    
+    return getReserves(lpContract)
+    .then(res => {
+      if(resAddress.toLowerCase() === tokenAddress["USDT"].toLowerCase()){
+        return BigNumber(res[0]).dividedBy(res[1]).toFixed(4)
+      }
+      else{
+        return BigNumber(res[1]).dividedBy(res[0]).toFixed(4)
+      }
+    })
+  } catch (err) {
+    console.log(err)
+  }
+  
+} 
