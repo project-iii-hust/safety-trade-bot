@@ -7,22 +7,6 @@ import PairComponent from './PairComponent.js'
 
 const bep20TokenAbi = require('../abi/bep20_token.json')
 
-function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
-  }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
-  }
-  return 0;
-}
-
-function getComparator(order, orderBy) {
-  return order === 'desc'
-    ? (a, b) => descendingComparator(a, b, orderBy)
-    : (a, b) => -descendingComparator(a, b, orderBy);
-}
-
 const MakeTransaction = ({firstToken, secondToken, web3Test, web3, cakeFactoryContract, password, cakeRouterContract, lpContract, cakeRouterContractTest}) => {
   const [tokenAmount, setTokenAmount] = useState("0")
   const [condition, setCondition] = useState("0")
@@ -33,7 +17,7 @@ const MakeTransaction = ({firstToken, secondToken, web3Test, web3, cakeFactoryCo
   const [reload, setReload] = useState(false)
   const [checked, setChecked] = useState(false)
 
-  const handleChangePage = (event, newPage) => {
+  const handleChangePage = ( newPage) => {
     setPage(newPage)
   };
 
@@ -41,14 +25,6 @@ const MakeTransaction = ({firstToken, secondToken, web3Test, web3, cakeFactoryCo
     setRowsPerPage(parseInt(event.target.value, 10))
     setPage(0)
   };
-
-  const tokenContract = useMemo(() => {
-    const tokenContract = new web3.eth.Contract(
-      bep20TokenAbi,
-      tokenAddress[firstToken]
-    )
-    return tokenContract
-  }, [firstToken])
 
   const pairList = useMemo(() => {
     const pairList = JSON.parse(localStorage.getItem("sbt_pairs"))
@@ -79,13 +55,6 @@ const MakeTransaction = ({firstToken, secondToken, web3Test, web3, cakeFactoryCo
     await addPair(firstToken, secondToken, tokenAmount, condition, web3Test, bep20TokenAbi, cakeRouterContractTest, account, sell)
     setReload(!reload)
   }
-
-  // const handleShowAllowance = () => {
-  //   tokenContract.methods.allowance(account.address, cakeRouterContract._address).call()
-  //     .then((res) => {
-  //       console.log("Allowance: " + BigNumber(res).dividedBy("1000000000000000000").toFixed(4))
-  //     })
-  // }
 
   return (
     <Box>

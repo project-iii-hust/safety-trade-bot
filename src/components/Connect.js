@@ -1,8 +1,8 @@
 import React, {useState} from 'react'
-import { Button, TextField, Typography } from '@mui/material'
+import { Button, TextField } from '@mui/material'
 import { Box } from '@mui/system'
-import { sha224, sha256 } from 'js-sha256'
-import { encrypt, decrypt } from '../utils'
+import { sha256 } from 'js-sha256'
+import { encrypt } from '../utils'
 import MakeTransaction from './MakeTransaction'
 
 const Connect = ({firstToken, secondToken, web3Test, web3, cakeFactoryContract, cakeRouterContract, lpContract, cakeRouterContractTest}) => {
@@ -10,7 +10,6 @@ const Connect = ({firstToken, secondToken, web3Test, web3, cakeFactoryContract, 
   const [password, setPassword] = useState("")
   const [privateKey, setPrivateKey] = useState("")
   const [telegramId, setTelegramId] = useState("")
-  const [exportKey, setExportKey] = useState(false)
 
   const handleClickConnect = () => {
     let sbt_key = localStorage.getItem("sbt_password")

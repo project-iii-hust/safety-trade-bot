@@ -89,7 +89,7 @@ export async function addPair(spendToken, receiveToken, allowance, condition, we
   let status = ""
   if(sbt_pairs == null) { 
     localStorage.setItem("sbt_pairs", JSON.stringify([[spendToken, receiveToken, allowance, condition, status, sell]]))
-    // chrome.storage.local.set({"sbt_pairs": JSON.stringify([[spendToken, receiveToken, allowance, condition]])}, () => {})
+    chrome.storage.local.set({"sbt_pairs": JSON.stringify([[spendToken, receiveToken, allowance, condition]])}, () => {})
     console.log("Set local storage!")
   }
   else{
@@ -97,7 +97,7 @@ export async function addPair(spendToken, receiveToken, allowance, condition, we
     if(findPair == null) {
       sbt_pairs.push([spendToken, receiveToken, allowance, condition, status, sell])
       localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
-      // chrome.storage.local.set({"sbt_pairs": JSON.stringify(sbt_pairs)}, () => {})
+      chrome.storage.local.set({"sbt_pairs": JSON.stringify(sbt_pairs)}, () => {})
     }
     else {
       let new_allowance = BigNumber(findPair[2]).isGreaterThan(allowance) ? findPair[2] : allowance
@@ -109,7 +109,7 @@ export async function addPair(spendToken, receiveToken, allowance, condition, we
         return pair
       })
       localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
-      // chrome.storage.local.set({"sbt_pairs": JSON.stringify(sbt_pairs)}, () => {})
+      chrome.storage.local.set({"sbt_pairs": JSON.stringify(sbt_pairs)}, () => {})
     }
   }
 }

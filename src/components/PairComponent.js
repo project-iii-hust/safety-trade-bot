@@ -2,9 +2,8 @@ import React, {useState, useEffect} from 'react'
 import { Box, Button, Typography } from '@mui/material'
 import UpdateIcon from '@mui/icons-material/Update';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { removePair, updatePair } from '../utils';
+import { removePair, updatePair, getPriceWithUSDT, sendSignedTxAndGetResult } from '../utils';
 import NumberInput from './NumberInput';
-import { getPriceWithUSDT, sendSignedTxAndGetResult } from '../utils';
 import { tokenAddressTest } from '../constants/constants';
 import BigNumber from 'bignumber.js';
 
