@@ -3,7 +3,7 @@ import './App.css';
 import { useEffect, useState, useMemo } from 'react';
 import Web3 from 'web3';
 import {FACTORY_ADDRESS, ROUTER_ADDRESS, tokenAddress, FACTORY_ADDRESS_TEST, ROUTER_ADDRESS_TEST, tokenAddressTest, BASE18} from "./constants/constants.js"
-import {getPairInfo, getReserves, getTokenAddress, getPrice} from "./utils/index.js"
+import {getPairInfo, getReserves, getTokenAddress, getPrice, getPriceWithUSDT} from "./utils/index.js"
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
@@ -47,7 +47,7 @@ function App() {
       ROUTER_ADDRESS
     )
     const cakeRouterContractTest = new web3.eth.Contract(
-      cakeFactoryAbi,
+      cakeRouterAbi,
       ROUTER_ADDRESS_TEST
     )
     return {web3, web3Test, cakeFactoryContract, cakeRouterContract, cakeFactoryContractTest, cakeRouterContractTest}
@@ -60,6 +60,7 @@ function App() {
       tokenAddress[secondToken]
     ).then((res) => {
       setPairAddress(res)
+      console.log(res)
     }).catch(err => {
       console.log(err)
     })
@@ -131,7 +132,7 @@ function App() {
               tokenAddress[firstToken],
               tokenAddress["USDT"]
             ).then((res) => {
-              getPrice(web3, res)
+              getPriceWithUSDT(web3, cakeFactoryContract, firstToken)
                 .then(resPrice => {
                   console.log("Price: " + resPrice)
                   setFirstTokenPrice(resPrice)
@@ -188,11 +189,11 @@ function App() {
           label="First Token"
           onChange={handleChangeFirstToken}
         >
-          <MenuItem value="USDT">USDT</MenuItem>
-          <MenuItem value="ETH">ETH</MenuItem>
-          <MenuItem value="BUSD">BUSD</MenuItem>
-          <MenuItem value="DAI">DAI</MenuItem>
-          <MenuItem value="CAKE">CAKE</MenuItem>
+          {
+            Object.keys(tokenAddress).map(token => (
+              <MenuItem value={token}>{token}</MenuItem>
+            ))
+          }
         </Select>
       </FormControl>
       <SwapHorizIcon sx={{fontSize: 50, margin: "auto 0"}} onClick={swapToken}/>
@@ -203,11 +204,11 @@ function App() {
           label="First Token"
           onChange={handleChangeSecondToken}
         >
-          <MenuItem value="USDT">USDT</MenuItem>
-          <MenuItem value="ETH">ETH</MenuItem>
-          <MenuItem value="BUSD">BUSD</MenuItem>
-          <MenuItem value="DAI">DAI</MenuItem>
-          <MenuItem value="CAKE">CAKE</MenuItem>
+          {
+            Object.keys(tokenAddress).map(token => (
+              <MenuItem value={token}>{token}</MenuItem>
+            ))
+          }
         </Select>
       </FormControl>
       </Box>
@@ -230,7 +231,7 @@ function App() {
           <Typography variant="body2" sx={{marginTop: "10px"}}>{BigNumber(reserveSecondToken).dividedBy(BASE18).toFixed(4)}</Typography>
         </Box>
       </Box>
-      <Connect firstToken={firstToken} secondToken={secondToken} web3={web3Test} cakeRouterContract={cakeRouterContractTest} lpContract={lpContractTest}/>
+      <Connect firstToken={firstToken} secondToken={secondToken} web3Test={web3Test} web3={web3} cakeFactoryContract={cakeFactoryContract} cakeRouterContract={cakeRouterContract} lpContract={lpContractTest} cakeRouterContractTest={cakeRouterContractTest}/>
       {/* <MakeTransaction firstToken={firstToken} secondToken={secondToken} web3={web3}/> */}
     </Box>
   );

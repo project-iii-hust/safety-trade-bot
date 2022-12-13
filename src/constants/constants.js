@@ -7,6 +7,8 @@ export const tokenAddressTest = {
   "ETH": "0x8babbb98678facc7342735486c851abd7a0d17ca",
   "BUSD": "0x78867BbEeF44f2326bF8DDd1941a4439382EF2A7",
   "DAI": "0x8a9424745056Eb399FD19a0EC26A14316684e274",
+  // "WBNB": "0xae13d989dac2f0debff460ac112a837c89baa7cd",
+  // "CAKE": ""                                          ,
   "SAFEMOON": "0xDAcbdeCc2992a63390d108e8507B98c7E2B5584a"
 }
 
@@ -17,6 +19,8 @@ export const tokenAddress = {
   "ETH": "0x2170ed0880ac9a755fd29b2688956bd959f933f8",
   "BUSD": "0xe9e7cea3dedca5984780bafc599bd69add087d56",
   "DAI": "0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3",
-  "CAKE": "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82"
+  // "CAKE": "0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82",
+  // "WBNB": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+  "SAFEMOON": "0x42981d0bfbAf196529376EE702F2a9Eb9092fcB5"
 }
 export const BASE18 = BigNumber(10).exponentiatedBy(18); 

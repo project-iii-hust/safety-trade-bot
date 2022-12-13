@@ -5,10 +5,11 @@ import { sha224, sha256 } from 'js-sha256'
 import { encrypt, decrypt } from '../utils'
 import MakeTransaction from './MakeTransaction'
 
-const Connect = ({firstToken, secondToken, web3, cakeRouterContract, lpContract}) => {
+const Connect = ({firstToken, secondToken, web3Test, web3, cakeFactoryContract, cakeRouterContract, lpContract, cakeRouterContractTest}) => {
   const [step, setStep] = useState(0)
   const [password, setPassword] = useState("")
   const [privateKey, setPrivateKey] = useState("")
+  const [telegramId, setTelegramId] = useState("")
   const [exportKey, setExportKey] = useState(false)
 
   const handleClickConnect = () => {
@@ -34,6 +35,8 @@ const Connect = ({firstToken, secondToken, web3, cakeRouterContract, lpContract}
     localStorage.setItem("sbt_password", hashedPassword)
     const hashedPrivateKey = encrypt(privateKey, password)
     localStorage.setItem("sbt_privatekey", hashedPrivateKey)
+    const hashedTelegramId = encrypt(telegramId, password)
+    localStorage.setItem("sbt_telegram_id", hashedTelegramId)
     setStep(3)
   }
 
@@ -45,8 +48,8 @@ const Connect = ({firstToken, secondToken, web3, cakeRouterContract, lpContract}
     }
   }
 
-  const handleExportPrivateKey = () => {
-    setExportKey(true)
+  const handleChangeTelegramId = (e) => {
+    setTelegramId(e.target.value)
   }
 
   return (
@@ -55,6 +58,7 @@ const Connect = ({firstToken, secondToken, web3, cakeRouterContract, lpContract}
       {step == 1 ? <Box>
         <TextField sx={{marginTop: "20px"}} label="Your password" variant="standard" value={password} onChange={handleChangePassword}/>
         <TextField sx={{marginTop: "20px"}} label="Private key" variant="standard" value={privateKey} onChange={handleChangePrivateKey}/>
+        <TextField sx={{marginTop: "20px"}} label="Telegram Id" variant="standard" value={telegramId} onChange={handleChangeTelegramId}/>
         <Button sx={{display: "block", margin: "20px auto", width: "60%"}}variant="contained" onClick={handleSubmitInfo}>Submit</Button>
       </Box> : ""}
       {step == 2 ? <Box>
@@ -62,7 +66,7 @@ const Connect = ({firstToken, secondToken, web3, cakeRouterContract, lpContract}
         <Button sx={{display: "block", margin: "20px auto", width: "60%"}}variant="contained" onClick={handleSubmit}>Submit</Button>
       </Box> : ""}
       {step == 3 ? <Box>
-        <MakeTransaction firstToken={firstToken} secondToken={secondToken} web3={web3} password={password} cakeRouterContract={cakeRouterContract} lpContract={lpContract}/>
+        <MakeTransaction firstToken={firstToken} secondToken={secondToken} web3Test={web3Test} web3={web3} cakeFactoryContract={cakeFactoryContract} password={password} cakeRouterContract={cakeRouterContract} lpContract={lpContract} cakeRouterContractTest={cakeRouterContractTest}/>
       </Box> : ""}
     </Box>
   )

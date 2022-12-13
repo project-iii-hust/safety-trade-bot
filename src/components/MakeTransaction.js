@@ -1,9 +1,8 @@
 import React, {useState, useMemo, useEffect} from 'react';
 import { privateKeyToAccount, addPair, decrypt } from '../utils';
 import {tokenAddress} from "../constants/constants.js"
-import { Button, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination } from '@mui/material';
+import { Button, Box, Table, TableBody, TableContainer, TableRow, TablePagination, Checkbox, Typography } from '@mui/material';
 import NumberInput from './NumberInput';
-import BigNumber from 'bignumber.js';
 import PairComponent from './PairComponent.js'
 
 const bep20TokenAbi = require('../abi/bep20_token.json')
@@ -24,7 +23,7 @@ function getComparator(order, orderBy) {
     : (a, b) => -descendingComparator(a, b, orderBy);
 }
 
-const MakeTransaction = ({firstToken, secondToken, web3, password, cakeRouterContract, lpContract}) => {
+const MakeTransaction = ({firstToken, secondToken, web3Test, web3, cakeFactoryContract, password, cakeRouterContract, lpContract, cakeRouterContractTest}) => {
   const [tokenAmount, setTokenAmount] = useState("0")
   const [condition, setCondition] = useState("0")
   const [update, setUpdate] = useState(false)
@@ -32,6 +31,7 @@ const MakeTransaction = ({firstToken, secondToken, web3, password, cakeRouterCon
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(2);
   const [reload, setReload] = useState(false)
+  const [checked, setChecked] = useState(false)
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage)
@@ -58,7 +58,7 @@ const MakeTransaction = ({firstToken, secondToken, web3, password, cakeRouterCon
 
   useEffect(() => {
     const pk = decrypt(localStorage.getItem('sbt_privatekey'), password)
-    privateKeyToAccount(web3, pk)
+    privateKeyToAccount(web3Test, pk)
       .then(res => {
         setAccount(res)
       })
@@ -75,7 +75,8 @@ const MakeTransaction = ({firstToken, secondToken, web3, password, cakeRouterCon
   }, []);
 
   const handleClick = async () => {
-    await addPair(firstToken, secondToken, tokenAmount, condition, web3, bep20TokenAbi, cakeRouterContract, account)
+    let sell = checked ? false : true
+    await addPair(firstToken, secondToken, tokenAmount, condition, web3Test, bep20TokenAbi, cakeRouterContractTest, account, sell)
     setReload(!reload)
   }
 
@@ -109,20 +110,25 @@ const MakeTransaction = ({firstToken, secondToken, web3, password, cakeRouterCon
           className={""}
           fullWidth
         />
+        <Box sx={{display: "flex", alignItems: "center", paddingTop: "25px"}}>
+          <Checkbox checked={checked} onChange={(e) => setChecked(!checked)}></Checkbox>
+          <Typography variant="body2">Buy?</Typography>
+        </Box>
+        
       </Box>
       <Button sx={{marginTop: "20px"}} variant="contained" onClick={handleClick}>Add {firstToken} ~ {secondToken}</Button> 
-      {pairList ? <Box>
+      {pairList && account ? <Box>
         <TableContainer>
           <Table sx={{width: "100%"}}>
             <TableBody>
               {pairList.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((pair) => (
                 <TableRow>
-                  <PairComponent data={pair} setReload={setReload} reload={reload}/>
+                  <PairComponent data={pair} setReload={setReload} reload={reload} web3={web3} web3Test={web3Test} cakeFactoryContract={cakeFactoryContract} account={account} cakeRouterContractTest={cakeRouterContractTest}/>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-          <TablePagination
+          {pairList.length > 0 ? <TablePagination
             rowsPerPageOptions={[1, 2]}
             component="div"
             count={pairList.length}
@@ -130,7 +136,7 @@ const MakeTransaction = ({firstToken, secondToken, web3, password, cakeRouterCon
             page={page}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
-          />
+          /> : ""}
         </TableContainer>
       </Box> : ""}
       {/* <Button onClick={handleShowAllowance}>Check</Button>  */}

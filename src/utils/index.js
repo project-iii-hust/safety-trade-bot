@@ -1,6 +1,6 @@
 /*global chrome*/
 import BigNumber from "bignumber.js";
-import { tokenAddress } from "../constants/constants";
+import { tokenAddress, tokenAddressTest } from "../constants/constants";
 
 const lpAbi = require('../abi/lp_abi.json')
 
@@ -18,6 +18,7 @@ export function getTokenAddress(contract) {
 }
 
 export async function sendSignedTxAndGetResult(account, contract, spendAmount, contractMethod, gasMultiplier, web3) {
+  console.log(account)
   const encodedAbi = contractMethod.encodeABI();
 
   let currentGasPrice = await web3.eth.getGasPrice();
@@ -26,7 +27,7 @@ export async function sendSignedTxAndGetResult(account, contract, spendAmount, c
   console.log(`Currrent gas price: ${currentGasPrice}, and proposed price: ${proposedGasPrice}`)
 
   let tx = {
-    from: account.address,
+    from: account['address'],
     to: contract._address,
     gas: 1000000,
     gasPrice: proposedGasPrice.toString(),
@@ -72,10 +73,10 @@ export function encrypt(text, key) {
   return charTextNew.join("")
 }
 
-export async function addPair(spendToken, receiveToken, allowance, condition, web3, bep20TokenAbi, cakeRouterContract, account) {
+export async function addPair(spendToken, receiveToken, allowance, condition, web3, bep20TokenAbi, cakeRouterContract, account, sell) {
   const tokenContract = await new web3.eth.Contract(
     bep20TokenAbi,
-    tokenAddress[spendToken]
+    tokenAddressTest[spendToken]
   )
 
   const approveFunction = tokenContract.methods.approve(cakeRouterContract._address, BigNumber(allowance).multipliedBy("1000000000000000000").toFixed())
@@ -85,15 +86,16 @@ export async function addPair(spendToken, receiveToken, allowance, condition, we
     })
 
   let sbt_pairs = JSON.parse(localStorage.getItem("sbt_pairs"))
+  let status = ""
   if(sbt_pairs == null) { 
-    localStorage.setItem("sbt_pairs", JSON.stringify([[spendToken, receiveToken, allowance, condition]]))
+    localStorage.setItem("sbt_pairs", JSON.stringify([[spendToken, receiveToken, allowance, condition, status, sell]]))
     // chrome.storage.local.set({"sbt_pairs": JSON.stringify([[spendToken, receiveToken, allowance, condition]])}, () => {})
     console.log("Set local storage!")
   }
   else{
-    const findPair = sbt_pairs.find(pair => pair[0] === spendToken && pair[1] === receiveToken)
+    const findPair = sbt_pairs.find(pair => pair[0] === spendToken && pair[1] === receiveToken && pair[5] === sell)
     if(findPair == null) {
-      sbt_pairs.push([spendToken, receiveToken, allowance, condition])
+      sbt_pairs.push([spendToken, receiveToken, allowance, condition, status, sell])
       localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
       // chrome.storage.local.set({"sbt_pairs": JSON.stringify(sbt_pairs)}, () => {})
     }
@@ -123,13 +125,14 @@ export function removePair(spendToken, receiveToken) {
   }
 }
 
-export function updatePair(spendToken, receiveToken, allowance, condition) {
+export function updatePair(spendToken, receiveToken, allowance, status, condition) {
   try {
     let sbt_pairs = JSON.parse(localStorage.getItem("sbt_pairs"))
     sbt_pairs.map(pair => {
       if(pair[0] === spendToken && pair[1] === receiveToken) {
         pair[2] = allowance
         pair[3] = condition
+        pair[4] = status
       }
       return pair
     })
@@ -161,7 +164,7 @@ export function decrypt(text, key) {
   return charTextNew.join("")
 }
 
-export const getPrice = async (web3, pairAddress) => {
+export async function getPrice (web3, pairAddress) {
   try {
     const lpContract = await new web3.eth.Contract(
       lpAbi,
@@ -186,3 +189,38 @@ export const getPrice = async (web3, pairAddress) => {
   }
   
 } 
+
+
+export async function getPriceWithUSDT (web3, cakeFactoryContract, token) {
+  try {
+    const pairAddress = await getPairInfo(
+      cakeFactoryContract,
+      tokenAddress[token],
+      tokenAddress['USDT']
+    )
+    
+    const lpContract = await new web3.eth.Contract(
+      lpAbi,
+      pairAddress
+    )
+
+    const resAddress = await getTokenAddress(lpContract)
+
+    console.log("Res Address: " +   resAddress)
+    
+    return getReserves(lpContract)
+    .then(res => {
+      if(resAddress.toLowerCase() === tokenAddress["USDT"].toLowerCase()){
+        return BigNumber(res[0]).dividedBy(res[1]).toFixed(4)
+      }
+      else{
+        return BigNumber(res[1]).dividedBy(res[0]).toFixed(4)
+      }
+    })
+  } catch (err) {
+    console.log(err)
+  }
+  
+} 
+
+// export function swapFunctionTest(spendToken, receiveToken, amount)
