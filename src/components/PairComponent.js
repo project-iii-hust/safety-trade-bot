@@ -6,12 +6,13 @@ import { removePair, updatePair, getPriceWithUSDT, sendSignedTxAndGetResult } fr
 import NumberInput from './NumberInput';
 import { tokenAddressTest } from '../constants/constants';
 import BigNumber from 'bignumber.js';
+import notification from '../utils/notification';
 
 const PairComponent = ({data, setReload, reload, web3, cakeFactoryContract, account, cakeRouterContractTest, web3Test}) => {
 
   const [change, setChange] = useState(false)
-  const [tokenAmount, setTokenAmount] = useState("0")
-  const [condition, setCondition] = useState("0")
+  const [tokenAmount, setTokenAmount] = useState("")
+  const [condition, setCondition] = useState("")
 
   useEffect(() => {
     const iid = window.setInterval(async () => {
@@ -26,18 +27,20 @@ const PairComponent = ({data, setReload, reload, web3, cakeFactoryContract, acco
       .then(resPrice => {
         console.log("Price of " + data[0] + ": " + resPrice)
         if(BigNumber(resPrice).isLessThanOrEqualTo(data[4])) {
-          handleSwap()
+          // handleSwap()
         }
       })
   }
 
   const handleDelete = () => {
-    removePair(data[0], data[1])
+    removePair(data[0], data[1], data[5])
     setReload(!reload)
   }
 
   const handleClick = () => {
-    updatePair(data[0], data[1], tokenAmount, condition, "")
+    const newAmount = tokenAmount !== "" ? tokenAmount : data[2]
+    const newCondition = condition !== "" ? condition : data[3]
+    updatePair(data[0], data[1], newAmount, newCondition, "", data[5])
     setChange(false)
     setReload(!reload)
   }

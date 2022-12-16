@@ -1,9 +1,11 @@
 /*global chrome*/
 import BigNumber from "bignumber.js";
 import { tokenAddress, tokenAddressTest } from "../constants/constants";
+import notification from "./notification";
+import { sendTelegramMessage } from "../telegram_bot";
 
 const lpAbi = require('../abi/lp_abi.json')
-
+const telegramId = localStorage.getItem("sbt_telegram_id")
 
 export async function getPairInfo(contract, tokenA, tokenB) {
   return await contract.methods.getPair(tokenA, tokenB).call();
@@ -74,62 +76,74 @@ export function encrypt(text, key) {
 }
 
 export async function addPair(spendToken, receiveToken, allowance, condition, web3, bep20TokenAbi, cakeRouterContract, account, sell) {
-  const tokenContract = await new web3.eth.Contract(
-    bep20TokenAbi,
-    tokenAddressTest[spendToken]
-  )
+  try{ 
+    const tokenContract = await new web3.eth.Contract(
+      bep20TokenAbi,
+      tokenAddressTest[spendToken]
+    )
 
-  const approveFunction = tokenContract.methods.approve(cakeRouterContract._address, BigNumber(allowance).multipliedBy("1000000000000000000").toFixed())
-  await sendSignedTxAndGetResult(account, tokenContract, 0, approveFunction, 10.0, web3)
-    .then(res => {
-      console.log("Successful approve " + allowance + " " + spendToken + "!")
-    })
-
-  let sbt_pairs = JSON.parse(localStorage.getItem("sbt_pairs"))
-  let status = ""
-  if(sbt_pairs == null) { 
-    localStorage.setItem("sbt_pairs", JSON.stringify([[spendToken, receiveToken, allowance, condition, status, sell]]))
-    chrome.storage.local.set({"sbt_pairs": JSON.stringify([[spendToken, receiveToken, allowance, condition]])}, () => {})
-    console.log("Set local storage!")
-  }
-  else{
-    const findPair = sbt_pairs.find(pair => pair[0] === spendToken && pair[1] === receiveToken && pair[5] === sell)
-    if(findPair == null) {
-      sbt_pairs.push([spendToken, receiveToken, allowance, condition, status, sell])
-      localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
-      chrome.storage.local.set({"sbt_pairs": JSON.stringify(sbt_pairs)}, () => {})
-    }
-    else {
-      let new_allowance = BigNumber(findPair[2]).isGreaterThan(allowance) ? findPair[2] : allowance
-      sbt_pairs.map(pair => {
-        if(pair[0] === spendToken && pair[1] === receiveToken) {
-          pair[2] = new_allowance
-          pair[3] = condition
-        }
-        return pair
+    const approveFunction = tokenContract.methods.approve(cakeRouterContract._address, BigNumber(allowance).multipliedBy("1000000000000000000").toFixed())
+    await sendSignedTxAndGetResult(account, tokenContract, 0, approveFunction, 10.0, web3)
+      .then(res => {
+        let sellStatus = sell ? "Sell" : "Buy"
+        notification("Pairs", "Successful add pair: " + spendToken + " - " + receiveToken + "\nAmount: " + allowance + "\nCondition: " + condition + "\nSell status: " + sellStatus)
+        sendTelegramMessage(telegramId, "Successful add pair: " + spendToken + " - " + receiveToken + "\nAmount: " + allowance + "\nCondition: " + condition + "\nSell status: " + sellStatus)
+        console.log("Successful approve " + allowance + " " + spendToken + "!")
       })
-      localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
-      chrome.storage.local.set({"sbt_pairs": JSON.stringify(sbt_pairs)}, () => {})
+
+    let sbt_pairs = JSON.parse(localStorage.getItem("sbt_pairs"))
+    let status = ""
+    if(sbt_pairs == null) { 
+      localStorage.setItem("sbt_pairs", JSON.stringify([[spendToken, receiveToken, allowance, condition, status, sell]]))
+      chrome.storage.local.set({"sbt_pairs": JSON.stringify([[spendToken, receiveToken, allowance, condition]])}, () => {})
+      console.log("Set local storage!")
     }
+    else{
+      const findPair = sbt_pairs.find(pair => pair[0] === spendToken && pair[1] === receiveToken && pair[5] === sell)
+      if(findPair == null) {
+        sbt_pairs.push([spendToken, receiveToken, allowance, condition, status, sell])
+        localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
+        chrome.storage.local.set({"sbt_pairs": JSON.stringify(sbt_pairs)}, () => {})
+      }
+      else {
+        let new_allowance = BigNumber(findPair[2]).isGreaterThan(allowance) ? findPair[2] : allowance
+        sbt_pairs.map(pair => {
+          if(pair[0] === spendToken && pair[1] === receiveToken) {
+            pair[2] = new_allowance
+            pair[3] = condition
+          }
+          return pair
+        })
+        localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
+        chrome.storage.local.set({"sbt_pairs": JSON.stringify(sbt_pairs)}, () => {})
+      }
+    }
+  }
+  catch(ex) {
+    notification("Pairs", "There is an error when adding pairs!")
   }
 }
 
-export function removePair(spendToken, receiveToken) {
+export function removePair(spendToken, receiveToken, sell) {
   try {
     let sbt_pairs = JSON.parse(localStorage.getItem("sbt_pairs"))
-    sbt_pairs = sbt_pairs.filter((pair) => pair[0] !== spendToken || pair[1] !== receiveToken)
+    sbt_pairs = sbt_pairs.filter((pair) => pair[0] !== spendToken || pair[1] !== receiveToken || pair[5] !== sell)
     localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
+    let sellStatus = sell ? "Sell" : "Buy"
+    notification("Pairs", "Succesfully delete pair: " + spendToken + " - " + receiveToken + " " + sellStatus)
+    sendTelegramMessage(telegramId, "Succesfully delete pair: " + spendToken + " - " + receiveToken + " " + sellStatus)
     console.log("Remove pair " + spendToken + " ~ " + receiveToken + " !")
   } catch(ex) {
+    notification("Pairs", "There is an error when deleting pairs!")
     console.log(ex)
   }
 }
 
-export function updatePair(spendToken, receiveToken, allowance, status, condition) {
+export function updatePair(spendToken, receiveToken, allowance, condition, status, sell) {
   try {
     let sbt_pairs = JSON.parse(localStorage.getItem("sbt_pairs"))
     sbt_pairs.map(pair => {
-      if(pair[0] === spendToken && pair[1] === receiveToken) {
+      if(pair[0] === spendToken && pair[1] === receiveToken && pair[5] === sell) {
         pair[2] = allowance
         pair[3] = condition
         pair[4] = status
@@ -137,8 +151,11 @@ export function updatePair(spendToken, receiveToken, allowance, status, conditio
       return pair
     })
     localStorage.setItem("sbt_pairs", JSON.stringify(sbt_pairs))
+    notification("Pairs", "Successful update pair: " + spendToken + " - " + receiveToken + "\nAmount: " + allowance + "\nCondition: " + condition)
+    sendTelegramMessage(telegramId, "Successful update pair: " + spendToken + " - " + receiveToken + "\nAmount: " + allowance + "\nCondition: " + condition)
     console.log("Update pair " + spendToken + " ~ " + receiveToken + " !")
   } catch(ex) {
+    notification("Pairs", "There is an error when updating pairs!")
     console.log(ex)
   }
 }
@@ -222,5 +239,14 @@ export async function getPriceWithUSDT (web3, cakeFactoryContract, token) {
   }
   
 } 
+
+export const passwordTransform = (password) => {
+  const passwordLength = password.length
+  let transformedPassword = ""
+  for (let i = 0; i < passwordLength; ++ i) {
+    transformedPassword = transformedPassword + "*"
+  }
+  return transformedPassword
+}
 
 // export function swapFunctionTest(spendToken, receiveToken, amount)

@@ -1,9 +1,11 @@
+/*global chrome*/
 import React, {useState} from 'react'
 import { Button, TextField } from '@mui/material'
 import { Box } from '@mui/system'
 import { sha256 } from 'js-sha256'
 import { encrypt } from '../utils'
 import MakeTransaction from './MakeTransaction'
+import { sendTelegramMessage } from '../telegram_bot'
 
 const Connect = ({firstToken, secondToken, web3Test, web3, cakeFactoryContract, cakeRouterContract, lpContract, cakeRouterContractTest}) => {
   const [step, setStep] = useState(0)
@@ -18,6 +20,7 @@ const Connect = ({firstToken, secondToken, web3Test, web3, cakeFactoryContract, 
     }
     else {
       setStep(2)
+      sendTelegramMessage()
     }
   }
 
@@ -34,8 +37,7 @@ const Connect = ({firstToken, secondToken, web3Test, web3, cakeFactoryContract, 
     localStorage.setItem("sbt_password", hashedPassword)
     const hashedPrivateKey = encrypt(privateKey, password)
     localStorage.setItem("sbt_privatekey", hashedPrivateKey)
-    const hashedTelegramId = encrypt(telegramId, password)
-    localStorage.setItem("sbt_telegram_id", hashedTelegramId)
+    localStorage.setItem("sbt_telegram_id", telegramId)
     setStep(3)
   }
 

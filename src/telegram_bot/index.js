@@ -6,7 +6,7 @@ export function sendTelegramMessage(chat_id, text) {
     url: `https://api.telegram.org/bot5986678709:AAEsDhQ73hOorO-K6xmfET7T52uH8hRYm8w/sendMessage?chat_id=${chat_id}text=${text}&parse_mode=html`,
     headers: {accept: 'application/json', 'content-type': 'application/json'},
     data: {
-      text: 'Required',
+      text: text,
       parse_mode: 'Optional',
       disable_web_page_preview: false,
       disable_notification: false,
