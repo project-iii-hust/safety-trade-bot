@@ -24,10 +24,10 @@ function App() {
   const [pairAddressTest, setPairAddressTest] = useState("0xaF9399F70d896dA0D56A4B2CbF95F4E90a6B99e8")
   const [reserveFirstToken, setReserveFirstToken] = useState("")
   const [reserveSecondToken, setReserveSecondToken] = useState("")
-  const [firstToken, setFirstToken] = useState("USDT")
-  const [secondToken, setSecondToken] = useState("DAI")
+  const [firstToken, setFirstToken] = useState("ETH")
+  const [secondToken, setSecondToken] = useState("USDT")
   const [swap, setSwap] = useState(false)
-  const [reload, setReload] = useState(false)
+  const [reload, setReload] = useState(1)
   const [firstTokenPrice, setFirstTokenPrice] = useState("1.0000")
 
 
@@ -92,13 +92,13 @@ function App() {
   // Re-render after 39s
   useEffect(() => {
     const iid = window.setInterval(async () => {
-      setReload(!reload)
+      setReload(Math.floor(Math.random() * 10))  
       console.log("Refresh App Page!")
     }, [10000]);
 
     return () => window.clearInterval(iid);
   }, []);
-
+  // console.log("Reload: " + reload)
   useEffect(() => {
     console.log("Change price!")
     getTokenAddress(lpContract)
@@ -147,7 +147,7 @@ function App() {
 
   const handleChangeFirstToken = (e) => {
     if(e.target.value !== secondToken) {
-      setFirstToken(e.target.value)
+      // setFirstToken(e.target.value)
     }
     else {
       setSecondToken(firstToken)
@@ -158,7 +158,7 @@ function App() {
 
   const handleChangeSecondToken = (e) => {
     if(e.target.value !== firstToken) {
-      setSecondToken(e.target.value)
+      // setSecondToken(e.target.value)
     }
     else {
       setFirstToken(secondToken)
@@ -221,8 +221,8 @@ function App() {
         </Box>  
         {/* {loading ? <SwapHorizIcon sx={{fontSize: 50, margin: "auto 0"}} onClick={swapToken}/> :  */}
         <Box sx={{display: "flex", flexDirection: "column", alignItems: "space-around", padding: "20px 0", width:"300px"}}>
-          <Typography variant="body1" sx={{margin: "auto 0", fontWeight: 600, textAlign: "center" }}>ER: {BigNumber(reserveSecondToken).dividedBy(reserveFirstToken).toFixed(4)}</Typography>
-          <Typography variant="body1" sx={{margin: "auto 0", fontWeight: 600, textAlign: "center", color: "red" }}>TP: {BigNumber(firstTokenPrice).toFixed(4)}$</Typography>
+          <Typography variant="body2" sx={{margin: "auto 0", fontWeight: 600, textAlign: "center" }}>1 {firstToken} = {BigNumber(reserveSecondToken).dividedBy(reserveFirstToken).toFixed(4)} {secondToken} </Typography>
+          <Typography variant="body2" sx={{margin: "auto 0", fontWeight: 600, textAlign: "center", color: "red" }}>1 {firstToken} = {BigNumber(firstTokenPrice).toFixed(4)}$</Typography>
         </Box>
         <Box>
           <img className="tokenIcon" alt={secondToken} height="auto"
